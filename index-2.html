@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Распределитель по коробам</title>
+<meta name="theme-color" content="#14171c">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+<style>
+  :root{
+    --bg:#14171c;
+    --bg-elev:#1b1f26;
+    --bg-elev2:#212630;
+    --border:#2a2f39;
+    --text:#e9e7e2;
+    --text-dim:#8b8f99;
+    --amber:#f5a623;
+    --amber-dim:#c4841a;
+    --amber-soft:#3a2f1c;
+    --danger:#e5595e;
+    --success:#4caf7d;
+    --mixed:#3a3420;
+    --over:#402420;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'IBM Plex Sans', system-ui, sans-serif;
+    padding-bottom:60px;
+    -webkit-tap-highlight-color:transparent;
+  }
+  h1,h2,h3,.display{
+    font-family:'Bebas Neue', sans-serif;
+    letter-spacing:0.03em;
+    font-weight:400;
+    margin:0;
+  }
+  .mono{font-family:'IBM Plex Mono', monospace;}
+  header{
+    padding:22px 18px 16px;
+    border-bottom:1px solid var(--border);
+    position:sticky; top:0; z-index:10;
+    background:rgba(20,23,28,0.95);
+    backdrop-filter:blur(6px);
+  }
+  header h1{font-size:28px;color:var(--amber);display:flex;align-items:center;gap:10px;}
+  header p{margin:4px 0 0;color:var(--text-dim);font-size:13px;}
+  main{max-width:720px;margin:0 auto;padding:16px;}
+  .card{
+    background:var(--bg-elev);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:16px;
+    margin-bottom:14px;
+  }
+  .card h2{font-size:20px;color:var(--text);margin-bottom:12px;letter-spacing:0.04em;}
+  .card h2 .n{color:var(--amber);margin-right:6px;}
+  label{
+    display:block;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;
+    color:var(--text-dim);margin-bottom:4px;margin-top:10px;
+  }
+  label:first-child{margin-top:0;}
+  input,select{
+    width:100%;background:var(--bg-elev2);border:1px solid var(--border);
+    color:var(--text);padding:10px 11px;border-radius:7px;font-size:15px;
+    font-family:'IBM Plex Mono', monospace;
+  }
+  input:focus,select:focus{outline:none;border-color:var(--amber-dim);}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+  button{
+    font-family:'IBM Plex Sans',sans-serif;font-weight:600;font-size:14px;
+    border:none;border-radius:7px;padding:12px 16px;cursor:pointer;
+    transition:transform .08s ease, opacity .15s ease;
+  }
+  button:active{transform:scale(0.97);}
+  .btn-primary{background:var(--amber);color:#1a1400;width:100%;margin-top:14px;}
+  .btn-secondary{background:var(--bg-elev2);color:var(--text);border:1px solid var(--border);}
+  .btn-danger{background:transparent;color:var(--danger);border:1px solid var(--danger);}
+  .btn-ghost{background:transparent;color:var(--text-dim);border:1px solid var(--border);}
+  .btn-row{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;}
+  .btn-row button{flex:1;min-width:140px;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th{
+    text-align:left;font-family:'IBM Plex Mono',monospace;font-weight:600;
+    color:var(--text-dim);font-size:11px;text-transform:uppercase;letter-spacing:0.05em;
+    padding:6px 6px;border-bottom:1px solid var(--border);
+  }
+  td{padding:7px 6px;border-bottom:1px solid var(--border);font-family:'IBM Plex Mono',monospace;}
+  tr:last-child td{border-bottom:none;}
+  .del-btn{background:none;border:none;color:var(--danger);cursor:pointer;font-size:16px;padding:2px 6px;}
+  .empty{color:var(--text-dim);font-size:13px;text-align:center;padding:18px 0;}
+  details summary{cursor:pointer;color:var(--text-dim);font-size:13px;padding:6px 0;user-select:none;}
+  details summary:hover{color:var(--text);}
+  .chip-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;}
+  .chip{
+    background:var(--bg-elev2);border:1px solid var(--border);border-radius:20px;
+    padding:6px 12px;font-size:13px;display:flex;align-items:center;gap:6px;
+  }
+  .chip button{background:none;border:none;color:var(--text-dim);padding:0;font-size:14px;cursor:pointer;}
+  .small-size-grid{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;}
+  .size-toggle{
+    background:var(--bg-elev2);border:1px solid var(--border);border-radius:6px;
+    padding:6px 10px;font-size:13px;cursor:pointer;color:var(--text-dim);font-family:'IBM Plex Mono',monospace;
+  }
+  .size-toggle.active{background:var(--amber-soft);border-color:var(--amber-dim);color:var(--amber);}
+  .city-block{margin-bottom:18px;}
+  .city-block h3{font-size:20px;color:var(--amber);display:flex;justify-content:space-between;align-items:baseline;}
+  .city-block .city-stats{font-size:12px;color:var(--text-dim);font-family:'IBM Plex Mono',monospace;font-weight:400;letter-spacing:0;}
+  .box-card{
+    background:var(--bg-elev2);border:1px solid var(--border);border-radius:8px;
+    padding:10px 12px;margin-top:8px;
+  }
+  .box-card.mixed{background:var(--mixed);border-color:#5c4d20;}
+  .box-card.over{background:var(--over);border-color:#7a3a34;}
+  .box-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+  .box-head .num{font-family:'IBM Plex Mono',monospace;color:var(--amber);font-size:13px;font-weight:600;}
+  .box-head .tag{font-size:10px;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-dim);}
+  .box-line{display:flex;justify-content:space-between;font-size:13px;padding:2px 0;font-family:'IBM Plex Mono',monospace;}
+  .box-line .qty{color:var(--amber);}
+  .box-total{border-top:1px dashed var(--border);margin-top:6px;padding-top:6px;display:flex;justify-content:space-between;font-size:13px;font-weight:600;}
+  .toast{
+    position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+    background:var(--bg-elev2);border:1px solid var(--amber-dim);color:var(--text);
+    padding:10px 18px;border-radius:8px;font-size:13px;opacity:0;pointer-events:none;
+    transition:opacity .25s ease, transform .25s ease;z-index:100;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(-6px);}
+  .note{font-size:11px;color:var(--text-dim);margin-top:10px;line-height:1.5;}
+  .legend{display:flex;gap:14px;font-size:11px;color:var(--text-dim);margin-top:10px;flex-wrap:wrap;}
+  .legend span{display:flex;align-items:center;gap:5px;}
+  .dot{width:10px;height:10px;border-radius:3px;display:inline-block;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>📦 РАСПРЕДЕЛИТЕЛЬ</h1>
+  <p>Раскладка товаров по коробам для отправки на склады</p>
+</header>
+
+<main>
+
+  <div class="card">
+    <h2><span class="n">01</span>Добавить товар</h2>
+    <label for="f-model">Модель / бренд</label>
+    <input list="model-list" id="f-model" placeholder="напр. Louvre classico">
+    <datalist id="model-list"></datalist>
+
+    <div class="row2">
+      <div>
+        <label for="f-color">Цвет</label>
+        <input list="color-list" id="f-color" placeholder="напр. чёрный">
+        <datalist id="color-list"></datalist>
+      </div>
+      <div>
+        <label for="f-size">Размер</label>
+        <select id="f-size"></select>
+      </div>
+    </div>
+
+    <div class="row2">
+      <div>
+        <label for="f-qty">Количество</label>
+        <input type="number" id="f-qty" min="1" step="1" placeholder="0">
+      </div>
+      <div>
+        <label for="f-city">Город отправки</label>
+        <select id="f-city"></select>
+      </div>
+    </div>
+
+    <button class="btn-primary" id="add-btn">Добавить в список</button>
+
+    <details style="margin-top:12px;">
+      <summary>Управление городами</summary>
+      <div class="chip-row" id="city-chips"></div>
+      <div class="row2" style="margin-top:10px;">
+        <input id="new-city" placeholder="Новый город">
+        <button class="btn-secondary" id="add-city-btn">Добавить город</button>
+      </div>
+    </details>
+
+    <details style="margin-top:8px;">
+      <summary>Управление размерами</summary>
+      <div class="chip-row" id="size-chips"></div>
+      <div class="row2" style="margin-top:10px;">
+        <input id="new-size" placeholder="Новый размер, напр. 4XL">
+        <button class="btn-secondary" id="add-size-btn">Добавить размер</button>
+      </div>
+    </details>
+  </div>
+
+  <div class="card">
+    <h2><span class="n">02</span>Список товаров <span id="items-count" class="mono" style="color:var(--text-dim);font-size:13px;"></span></h2>
+    <div id="items-table"></div>
+  </div>
+
+  <div class="card">
+    <details>
+      <summary>⚙️ Настройки коробов</summary>
+      <label>Вместимость короба, шт</label>
+      <input type="number" id="s-box" min="1">
+      <label>Максимум с перебором (для мелких размеров), шт</label>
+      <input type="number" id="s-cap" min="1">
+      <label>Порог «мелкого» короба, при котором остаток раскидывается по другим, шт</label>
+      <input type="number" id="s-tiny" min="1">
+      <label>Мелкие размеры (можно грузить с перебором)</label>
+      <div class="small-size-grid" id="small-size-grid"></div>
+      <div class="note">Если товар не влезает по 60 шт ровно, остаток смешивается с другими позициями. Если получившийся «хвостовой» короб меньше порога — он расформировывается и раскладывается по другим коробам с мелкими размерами (т.к. они легче и укладываются в лимит по весу), даже с превышением вместимости — но не больше максимума.</div>
+    </details>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn-primary" id="distribute-btn" style="margin-top:0;">Распределить по коробам</button>
+  </div>
+  <div class="btn-row">
+    <button class="btn-secondary" id="export-btn">Скачать Excel</button>
+    <button class="btn-danger" id="clear-btn">Очистить всё</button>
+  </div>
+
+  <div id="results"></div>
+
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const DEFAULT_SIZES = ['3XS','2XS','XS','S','M','L','XL','2XL','3XL'];
+const DEFAULT_SMALL = ['3XS','2XS','XS','S'];
+const DEFAULT_CITIES = ['Тула','Санкт Петербург Шушары','Невинномысск','Новосемейкино','Екатеринбург - Перспективная 14'];
+
+const LS = {
+  items: 'boxdist:items',
+  cities: 'boxdist:cities',
+  sizes: 'boxdist:sizes',
+  settings: 'boxdist:settings',
+  small: 'boxdist:smallSizes'
+};
+
+function load(key, fallback){
+  try{
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : fallback;
+  }catch(e){ return fallback; }
+}
+function save(key, val){ localStorage.setItem(key, JSON.stringify(val)); }
+
+let items = load(LS.items, []);
+let cities = load(LS.cities, DEFAULT_CITIES.slice());
+let sizes = load(LS.sizes, DEFAULT_SIZES.slice());
+let settings = load(LS.settings, { boxSize:60, cap:65, tiny:10 });
+let smallSizes = load(LS.small, DEFAULT_SMALL.slice());
+let lastResults = null;
+
+// ---------- helpers ----------
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(()=>t.classList.remove('show'), 2200);
+}
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+
+// ---------- render: sizes select + chips ----------
+function renderSizeSelect(){
+  const sel = document.getElementById('f-size');
+  const prev = sel.value;
+  sel.innerHTML = sizes.map(s=>`<option value="${s}">${s}</option>`).join('');
+  if(sizes.includes(prev)) sel.value = prev;
+}
+
+function renderSizeChips(){
+  const chips = document.getElementById('size-chips');
+  chips.innerHTML = sizes.map(s=>`
+    <span class="chip">${s}<button data-size="${s}" class="rm-size">✕</button></span>
+  `).join('');
+  chips.querySelectorAll('.rm-size').forEach(btn=>{
+    btn.onclick = ()=>{
+      const s = btn.dataset.size;
+      sizes = sizes.filter(x=>x!==s);
+      smallSizes = smallSizes.filter(x=>x!==s);
+      save(LS.sizes, sizes);
+      save(LS.small, smallSizes);
+      renderSizeChips();
+      renderSizeSelect();
+      renderSmallSizeGrid();
+    };
+  });
+}
+
+document.getElementById('add-size-btn').onclick = ()=>{
+  const val = document.getElementById('new-size').value.trim();
+  if(!val){ return; }
+  if(!sizes.includes(val)) sizes.push(val);
+  save(LS.sizes, sizes);
+  document.getElementById('new-size').value = '';
+  renderSizeChips();
+  renderSizeSelect();
+  renderSmallSizeGrid();
+};
+
+// ---------- render: city select + chips ----------
+function renderCities(){
+  const sel = document.getElementById('f-city');
+  sel.innerHTML = cities.map(c=>`<option value="${c}">${c}</option>`).join('');
+  const chips = document.getElementById('city-chips');
+  chips.innerHTML = cities.map(c=>`
+    <span class="chip">${c}<button data-city="${c}" class="rm-city">✕</button></span>
+  `).join('');
+  chips.querySelectorAll('.rm-city').forEach(btn=>{
+    btn.onclick = ()=>{
+      cities = cities.filter(c=>c!==btn.dataset.city);
+      save(LS.cities, cities);
+      renderCities();
+    };
+  });
+}
+
+// ---------- render: small size toggles ----------
+function renderSmallSizeGrid(){
+  const grid = document.getElementById('small-size-grid');
+  grid.innerHTML = sizes.map(s=>`
+    <div class="size-toggle ${smallSizes.includes(s)?'active':''}" data-size="${s}">${s}</div>
+  `).join('');
+  grid.querySelectorAll('.size-toggle').forEach(el=>{
+    el.onclick = ()=>{
+      const s = el.dataset.size;
+      if(smallSizes.includes(s)) smallSizes = smallSizes.filter(x=>x!==s);
+      else smallSizes.push(s);
+      save(LS.small, smallSizes);
+      renderSmallSizeGrid();
+    };
+  });
+}
+
+// ---------- render: settings fields ----------
+function renderSettings(){
+  document.getElementById('s-box').value = settings.boxSize;
+  document.getElementById('s-cap').value = settings.cap;
+  document.getElementById('s-tiny').value = settings.tiny;
+}
+['s-box','s-cap','s-tiny'].forEach(id=>{
+  document.getElementById(id).addEventListener('change', ()=>{
+    settings.boxSize = parseInt(document.getElementById('s-box').value) || 60;
+    settings.cap = parseInt(document.getElementById('s-cap').value) || settings.boxSize;
+    settings.tiny = parseInt(document.getElementById('s-tiny').value) || 10;
+    save(LS.settings, settings);
+  });
+});
+
+// ---------- render: items table ----------
+function renderItemsTable(){
+  const wrap = document.getElementById('items-table');
+  const countEl = document.getElementById('items-count');
+  if(items.length === 0){
+    wrap.innerHTML = `<div class="empty">Список пуст — добавьте первый товар выше</div>`;
+    countEl.textContent = '';
+    return;
+  }
+  countEl.textContent = `(${items.length})`;
+  const rows = items.map(it => `
+    <tr>
+      <td>${it.city}</td>
+      <td>${it.model}</td>
+      <td>${it.color}</td>
+      <td>${it.size}</td>
+      <td>${it.qty}</td>
+      <td><button class="del-btn" data-id="${it.id}">✕</button></td>
+    </tr>
+  `).join('');
+  wrap.innerHTML = `
+    <table>
+      <thead><tr><th>Город</th><th>Модель</th><th>Цвет</th><th>Разм.</th><th>Кол-во</th><th></th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+  wrap.querySelectorAll('.del-btn').forEach(btn=>{
+    btn.onclick = ()=>{
+      items = items.filter(it=>it.id !== btn.dataset.id);
+      save(LS.items, items);
+      renderItemsTable();
+    };
+  });
+}
+
+// ---------- add item ----------
+document.getElementById('add-btn').onclick = ()=>{
+  const model = document.getElementById('f-model').value.trim();
+  const color = document.getElementById('f-color').value.trim();
+  const size = document.getElementById('f-size').value;
+  const qty = parseInt(document.getElementById('f-qty').value);
+  const city = document.getElementById('f-city').value;
+
+  if(!model){ toast('Укажите модель'); return; }
+  if(!color){ toast('Укажите цвет'); return; }
+  if(!qty || qty <= 0){ toast('Укажите количество больше нуля'); return; }
+  if(!city){ toast('Выберите город'); return; }
+
+  items.push({ id: uid(), model, color, size, qty, city });
+  save(LS.items, items);
+  renderItemsTable();
+  updateDatalists();
+
+  document.getElementById('f-qty').value = '';
+  document.getElementById('f-model').focus();
+  toast('Добавлено');
+};
+
+document.getElementById('add-city-btn').onclick = ()=>{
+  const val = document.getElementById('new-city').value.trim();
+  if(!val){ return; }
+  if(!cities.includes(val)) cities.push(val);
+  save(LS.cities, cities);
+  document.getElementById('new-city').value = '';
+  renderCities();
+};
+
+function updateDatalists(){
+  const models = [...new Set(items.map(it=>it.model))];
+  const colors = [...new Set(items.map(it=>it.color))];
+  document.getElementById('model-list').innerHTML = models.map(m=>`<option value="${m}">`).join('');
+  document.getElementById('color-list').innerHTML = colors.map(c=>`<option value="${c}">`).join('');
+}
+
+// ---------- distribution algorithm ----------
+function distributeCity(cityItems){
+  const BOX = settings.boxSize, CAP = settings.cap, TINY = settings.tiny;
+  const isSmall = (x)=> smallSizes.includes(x.size);
+
+  // merge duplicates by model|color|size
+  const mergedMap = {};
+  cityItems.forEach(it=>{
+    const key = it.model+'|'+it.color+'|'+it.size;
+    if(!mergedMap[key]) mergedMap[key] = { model: it.model, color: it.color, size: it.size, qty: 0 };
+    mergedMap[key].qty += Number(it.qty);
+  });
+  const list = Object.values(mergedMap);
+
+  const singleBoxes = [];
+  const leftover = [];
+  list.forEach(it=>{
+    let qty = it.qty;
+    const full = Math.floor(qty / BOX);
+    const rem = qty % BOX;
+    for(let i=0;i<full;i++){
+      singleBoxes.push([{ model: it.model, color: it.color, size: it.size, qty: BOX }]);
+    }
+    if(rem > 0) leftover.push({ model: it.model, color: it.color, size: it.size, qty: rem });
+  });
+
+  const mixedBoxes = [];
+  let current = [];
+  let curQty = 0;
+  leftover.forEach(it=>{
+    let remaining = it.qty;
+    while(remaining > 0){
+      const space = BOX - curQty;
+      const take = Math.min(space, remaining);
+      current.push({ model: it.model, color: it.color, size: it.size, qty: take });
+      curQty += take;
+      remaining -= take;
+      if(curQty === BOX){
+        mixedBoxes.push(current);
+        current = [];
+        curQty = 0;
+      }
+    }
+  });
+  if(current.length) mixedBoxes.push(current);
+
+  if(mixedBoxes.length){
+    const lastTotal = mixedBoxes[mixedBoxes.length-1].reduce((s,x)=>s+x.qty,0);
+    if(lastTotal < TINY && mixedBoxes.length > 1){
+      const tiny = mixedBoxes.pop();
+      tiny.forEach(x=>{
+        let remaining = x.qty;
+        const order = mixedBoxes
+          .map((box,i)=>({ i, hasSmall: box.some(isSmall) }))
+          .sort((a,b)=> (a.hasSmall===b.hasSmall) ? a.i-b.i : (a.hasSmall ? -1 : 1));
+        for(const { i } of order){
+          if(remaining <= 0) break;
+          const box = mixedBoxes[i];
+          const total = box.reduce((s,y)=>s+y.qty,0);
+          const space = CAP - total;
+          if(space > 0){
+            const take = Math.min(space, remaining);
+            box.push({ model: x.model, color: x.color, size: x.size, qty: take });
+            remaining -= take;
+          }
+        }
+        if(remaining > 0){
+          mixedBoxes.push([{ model: x.model, color: x.color, size: x.size, qty: remaining }]);
+        }
+      });
+    }
+  }
+
+  return singleBoxes.concat(mixedBoxes);
+}
+
+function runDistribution(){
+  if(items.length === 0){ toast('Сначала добавьте товары'); return null; }
+  const usedCities = [...new Set(items.map(it=>it.city))];
+  const results = {};
+  usedCities.forEach(city=>{
+    const cityItems = items.filter(it=>it.city === city);
+    results[city] = distributeCity(cityItems);
+  });
+  return results;
+}
+
+// ---------- render results ----------
+function renderResults(results){
+  const wrap = document.getElementById('results');
+  if(!results){ wrap.innerHTML=''; return; }
+  const cityNames = Object.keys(results);
+  if(cityNames.length === 0){
+    wrap.innerHTML = `<div class="empty">Нет данных для распределения</div>`;
+    return;
+  }
+  wrap.innerHTML = cityNames.map(city=>{
+    const boxes = results[city];
+    const total = boxes.reduce((s,b)=> s + b.reduce((s2,x)=>s2+x.qty,0), 0);
+    const nSingle = boxes.filter(b=>b.length===1).length;
+    const nMixed = boxes.length - nSingle;
+    const boxesHtml = boxes.map((box, idx)=>{
+      const boxTotal = box.reduce((s,x)=>s+x.qty,0);
+      const isMixed = box.length > 1;
+      const isOver = boxTotal > settings.boxSize;
+      const cls = isOver ? 'over' : (isMixed ? 'mixed' : '');
+      const tag = isOver ? 'перебор' : (isMixed ? 'смешанный' : 'цельный');
+      const lines = box.map(x=>`
+        <div class="box-line"><span>${x.model} · ${x.color} · ${x.size}</span><span class="qty">${x.qty}</span></div>
+      `).join('');
+      return `
+        <div class="box-card ${cls}">
+          <div class="box-head"><span class="num">Короб ${idx+1}</span><span class="tag">${tag}</span></div>
+          ${lines}
+          <div class="box-total"><span>Итого</span><span>${boxTotal} шт</span></div>
+        </div>
+      `;
+    }).join('');
+    return `
+      <div class="city-block">
+        <h3>${city} <span class="city-stats">${total} шт · ${boxes.length} короб. (${nSingle} цельн. / ${nMixed} смеш.)</span></h3>
+        ${boxesHtml}
+      </div>
+    `;
+  }).join('') + `
+    <div class="legend">
+      <span><span class="dot" style="background:var(--bg-elev2);border:1px solid var(--border);"></span>цельный короб</span>
+      <span><span class="dot" style="background:var(--mixed);border:1px solid #5c4d20;"></span>смешанный</span>
+      <span><span class="dot" style="background:var(--over);border:1px solid #7a3a34;"></span>с перебором (мелкие размеры)</span>
+    </div>
+  `;
+}
+
+document.getElementById('distribute-btn').onclick = ()=>{
+  lastResults = runDistribution();
+  renderResults(lastResults);
+  if(lastResults) document.getElementById('results').scrollIntoView({ behavior:'smooth' });
+};
+
+document.getElementById('clear-btn').onclick = ()=>{
+  if(!confirm('Удалить весь список товаров и результаты?')) return;
+  items = [];
+  save(LS.items, items);
+  lastResults = null;
+  renderItemsTable();
+  renderResults(null);
+  updateDatalists();
+  toast('Очищено');
+};
+
+// ---------- excel export ----------
+async function exportExcel(){
+  if(!lastResults){
+    lastResults = runDistribution();
+    renderResults(lastResults);
+  }
+  if(!lastResults) return;
+
+  const wb = new ExcelJS.Workbook();
+  const headerFill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF2F5496' } };
+  const mixedFill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FFFFF2CC' } };
+  const overFill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FFFCE4D6' } };
+  const altFill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FFEAF1FB' } };
+  const thin = { style:'thin', color:{ argb:'FF999999' } };
+  const border = { top:thin, bottom:thin, left:thin, right:thin };
+
+  const cityNames = Object.keys(lastResults);
+  const sumSheet = wb.addWorksheet('Сводка');
+  sumSheet.getCell('A1').value = 'Сводка по распределению коробов';
+  sumSheet.getCell('A1').font = { name:'Arial', bold:true, size:13, color:{ argb:'FF2F5496' } };
+  sumSheet.mergeCells('A1:F1');
+
+  const sumHeaders = ['Город','Всего коробов','Всего штук','Цельных','Смешанных','С перебором'];
+  sumHeaders.forEach((h,i)=>{
+    const cell = sumSheet.getCell(3, i+1);
+    cell.value = h;
+    cell.font = { name:'Arial', bold:true, color:{ argb:'FFFFFFFF' }, size:11 };
+    cell.fill = headerFill;
+    cell.alignment = { horizontal:'center', vertical:'middle' };
+    cell.border = border;
+  });
+
+  let r = 4;
+  let totBoxes=0, totQty=0, totSingle=0, totMixed=0, totOver=0;
+  cityNames.forEach(city=>{
+    const boxes = lastResults[city];
+    const total = boxes.reduce((s,b)=> s + b.reduce((s2,x)=>s2+x.qty,0), 0);
+    const nSingle = boxes.filter(b=>b.length===1).length;
+    const nMixed = boxes.length - nSingle;
+    const nOver = boxes.filter(b=> b.reduce((s2,x)=>s2+x.qty,0) > settings.boxSize).length;
+    totBoxes+=boxes.length; totQty+=total; totSingle+=nSingle; totMixed+=nMixed; totOver+=nOver;
+    [city, boxes.length, total, nSingle, nMixed, nOver].forEach((v,i)=>{
+      const cell = sumSheet.getCell(r, i+1);
+      cell.value = v;
+      cell.font = { name:'Arial', size:10 };
+      cell.border = border;
+      cell.alignment = { horizontal: i===0?'left':'center' };
+    });
+    r++;
+  });
+  ['ИТОГО', totBoxes, totQty, totSingle, totMixed, totOver].forEach((v,i)=>{
+    const cell = sumSheet.getCell(r, i+1);
+    cell.value = v;
+    cell.font = { name:'Arial', bold:true, size:10 };
+    cell.border = border;
+    cell.alignment = { horizontal:'center' };
+  });
+  sumSheet.getColumn(1).width = 32;
+  sumSheet.getColumn(2).width = 14;
+  sumSheet.getColumn(3).width = 12;
+  sumSheet.getColumn(4).width = 11;
+  sumSheet.getColumn(5).width = 13;
+  sumSheet.getColumn(6).width = 13;
+
+  cityNames.forEach(city=>{
+    const boxes = lastResults[city];
+    const total = boxes.reduce((s,b)=> s + b.reduce((s2,x)=>s2+x.qty,0), 0);
+    const sheetName = city.slice(0,31);
+    const sh = wb.addWorksheet(sheetName);
+    sh.getCell('A1').value = `Распределение по коробам: ${city}`;
+    sh.getCell('A1').font = { name:'Arial', bold:true, size:13, color:{ argb:'FF2F5496' } };
+    sh.mergeCells('A1:D1');
+    sh.getCell('A2').value = `Всего: ${total} шт | Коробов: ${boxes.length}`;
+    sh.getCell('A2').font = { name:'Arial', italic:true, size:10, color:{ argb:'FF666666' } };
+    sh.mergeCells('A2:D2');
+
+    let row = 4;
+    ['Короб №','Модель','Цвет / Размер','Кол-во, шт'].forEach((h,i)=>{
+      const cell = sh.getCell(row, i+1);
+      cell.value = h;
+      cell.font = { name:'Arial', bold:true, color:{ argb:'FFFFFFFF' }, size:11 };
+      cell.fill = headerFill;
+      cell.alignment = { horizontal:'center', vertical:'middle' };
+      cell.border = border;
+    });
+    row++;
+
+    boxes.forEach((box, idx)=>{
+      const startRow = row;
+      const boxTotal = box.reduce((s,x)=>s+x.qty,0);
+      const isMixed = box.length > 1;
+      const isOver = boxTotal > settings.boxSize;
+      box.forEach(x=>{
+        sh.getCell(row,1).value = idx+1;
+        sh.getCell(row,2).value = x.model;
+        sh.getCell(row,3).value = `${x.color} / ${x.size}`;
+        sh.getCell(row,4).value = x.qty;
+        for(let c=1;c<=4;c++){
+          const cell = sh.getCell(row,c);
+          cell.font = { name:'Arial', size:10 };
+          cell.alignment = { horizontal: c===2?'left':'center', vertical:'middle' };
+          cell.border = border;
+          if(isOver) cell.fill = overFill;
+          else if(isMixed) cell.fill = mixedFill;
+          else if(idx % 2 === 0) cell.fill = altFill;
+        }
+        row++;
+      });
+      if(row-1 > startRow){
+        sh.mergeCells(startRow,1,row-1,1);
+        sh.getCell(startRow,1).alignment = { horizontal:'center', vertical:'middle' };
+      }
+      const label = isOver ? 'Итого в коробе (перебор — мелкие размеры):' : 'Итого в коробе:';
+      sh.getCell(row,3).value = label;
+      sh.getCell(row,3).font = { name:'Arial', bold:true, size:10 };
+      sh.getCell(row,3).alignment = { horizontal:'right' };
+      sh.getCell(row,4).value = boxTotal;
+      sh.getCell(row,4).font = { name:'Arial', bold:true, size:10 };
+      for(let c=1;c<=4;c++) sh.getCell(row,c).border = border;
+      row++;
+    });
+
+    sh.getColumn(1).width = 10;
+    sh.getColumn(2).width = 22;
+    sh.getColumn(3).width = 22;
+    sh.getColumn(4).width = 14;
+    sh.views = [{ state:'frozen', ySplit:4 }];
+  });
+
+  const buffer = await wb.xlsx.writeBuffer();
+  const blob = new Blob([buffer], { type:'application/octet-stream' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'Распределение_по_коробам.xlsx';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  toast('Файл сохранён');
+}
+document.getElementById('export-btn').onclick = exportExcel;
+
+// ---------- init ----------
+renderSizeSelect();
+renderSizeChips();
+renderCities();
+renderSmallSizeGrid();
+renderSettings();
+renderItemsTable();
+updateDatalists();
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>
